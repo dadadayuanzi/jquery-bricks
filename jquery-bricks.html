@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            outline: none;
+            background-color:  	#90EE90;
+        }
+        .title {
+            width: 480px;
+            text-align: center;
+            margin: 0 auto;
+            margin-top: 20px;
+            font-size: 20px;
+            color: brown;
+            background-color: #cfc;
+        }
+        canvas {
+            margin: 0 auto;
+            background-color:  	#3CB371;
+            display: block;
+            margin-top: 10px;
+            border: 1px solid rgb(63, 178, 207);
+        }
+        .start {
+            margin: 0 auto;
+            margin-top: 20px;
+            font-size: 24px;
+            text-align: center;
+            width: 160px;
+            background-color:  	#228B22;
+            border-radius: 15px;
+            color: cadetblue;
+            cursor: pointer;
+        }
+        strong {
+            display: block;
+            margin: 0 auto;
+            color: darkcyan;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">打砖块游戏</div>
+    <canvas id="games" width="480" height="460"></canvas>
+    <div class="start" flage="flage">开始游戏</div>
+    <strong>空格暂停游戏</strong>
+    <script src="../jquery.min.js"></script>
+    <script>
+        var canvas = $("#games")[0];
+        var ctx = canvas.getContext("2d"); //创建画布上的绘图环境
+        var stop_status = true; //停止键是否有效，用来判断游戏结束后不能按停止键；
+        var stop; //停止动画
+        var canvas_status = true; //初始未按停止键
+
+        var ballPadding = 10;
+        var ballColor = 'skyblue';
+        var ballx = 2;
+        var bally = -2;
+        //球的位置
+        var x = canvas.width/2;
+        var y = canvas.height - 25;
+
+        var rightPressed = false;
+        var leftPressed = false;
+
+        var paddleWidth = 75;
+        var paddleHeight = 15;
+        var paddleX = (canvas.width - paddleWidth)/2;
+        var paddleY = (canvas.height - paddleHeight);
+
+        var brickRow = 5;
+        var brickCol = 6;
+        var brickTop = 35;
+        var brickLeft = 15;
+        var brickPadding = 6;
+        var brickWidth = 70;
+        var brickHeight = 20;
+
+        var score = 0;
+        var lives = 3;
+        //初始化二维数组，储存砖块信息 status：1 砖块显示 status：0 砖块消失
+        var bricks = [];
+        for (var c = 0;c < brickCol;c++){
+                bricks[c] = [];
+                for (var r = 0;r < brickRow; r++){
+                    bricks[c][r] = {x:0,y:0,status:1};
+                } 
+            }
+        function drawBall () {
+            ctx.beginPath();
+            ctx.arc(x,y,ballPadding,0,Math.PI*2) //画一个圆，底部居中
+            ctx.fillStyle = ballColor;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPaddle () {
+            ctx.beginPath();
+            ctx.rect( paddleX, paddleY,paddleWidth,paddleHeight);
+            ctx.fillStyle = "#008080";
+            ctx.fill();
+            ctx.closePath();
+        }
+        
+        function drawBricks () {
+            for (var c = 0;c < brickCol;c++){
+                for (var r = 0;r < brickRow; r++){
+                    if (bricks[c][r].status == 1) {
+                        var brickX = (c*(brickWidth + brickPadding)) + brickLeft;
+                        var brickY = (r*(brickHeight + brickPadding)) + brickTop;
+                        bricks[c][r].x = brickX;
+                        bricks[c][r].y = brickY;
+                        ctx.beginPath();
+                        ctx.rect(brickX,brickY,brickWidth,brickHeight);
+                        ctx.fillStyle = "#00FA9A";
+                        ctx.fill();
+                        ctx.closePath(); 
+                    }
+                }
+            }
+        }
+
+        function drawScore () {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#00FA9A"
+            ctx.fillText('Score：' + score,15,20)
+        }
+
+        function drawLives () {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#00Fa9A";
+            ctx.fillText('Lives：' + lives,canvas.width - 70,20)
+        }
+        // Game over
+        function drawOver () {
+            ctx.font = "30px Arial";
+            ctx.fillStyle = "#00Fa9A";
+            ctx.fillText('Game Over',170,200)
+        }
+
+        function collosion () {
+            for (var c = 0;c < brickCol;c++){
+                for (var r = 0;r < brickRow; r++){
+                    var b = bricks[c][r];
+                    if(b.status == 1) {
+                        if ( x > b.x && x < b.x + brickWidth && y > b.y && y < b.y + brickHeight) {
+                            b.status = 0;
+                            bally = -bally;
+                            score++;
+                            if (score == brickRow*brickCol) {
+                                document.location.reload();
+                                x = canvas.width/2;
+                                y = canvas.height - 25;
+                                ballx = 3;
+                                bally = -3;
+                                paddleX = (canvas.width - paddleWidth)/2;
+                                paddleY = (canvas.height - paddleHeight);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function draw () {
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            drawBall();
+            drawPaddle();
+            drawBricks();
+            drawScore();
+            drawLives();
+            collosion();
+            // 横轴上的反向运动
+            if (x + ballx > canvas.width - ballPadding || x + ballx < ballPadding) {
+                ballx = -ballx;
+            }
+            // 竖轴上
+            if (y + bally < ballPadding) {
+                bally = -bally;
+            }else if (y + bally > canvas.height - (ballPadding + paddleHeight)) {
+                if (x > paddleX && x <paddleX + paddleWidth) {
+                    bally = -bally;
+                }else {
+                    lives--;
+                    if(lives == 0) {
+                        drawOver();
+                        $('.start').attr('flage','flage');
+                        lives = 4;
+                        score = 0;
+                        stop_status = false;
+                        return;
+                    }else {
+                        x = canvas.width/2;
+                        y = canvas.height - 25;
+                        paddleX = (canvas.width - paddleWidth)/2;
+                        paddleY = (canvas.height - paddleHeight);
+                    }
+                }
+            }
+            if( rightPressed && paddleX < canvas.width - paddleWidth) {
+                paddleX += 5;
+            }
+            else if( leftPressed && paddleX > 0) {
+                paddleX -= 5;
+            }
+            x += ballx;
+            y += bally;
+            stop = requestAnimationFrame(draw);
+        }
+
+        var e = event || window.event;
+        function mouseMoveHandler (e) {
+            var relativeX = e.clientX - canvas.offsetLeft;
+            if (relativeX > paddleWidth/2 && relativeX < canvas.width - paddleWidth/2) {
+                paddleX = relativeX - paddleWidth/2;
+            }
+        }
+
+        function keyDownHandler (e) {
+            if (e.keyCode == 39){
+                rightPressed = true;
+            }else if(e.keyCode == 37) {
+                leftPressed = true;
+            }else if(e.keyCode == 32) {
+                if (stop_status){
+                    window.cancelAnimationFrame(stop); //可以取消该次动画
+                    canvas_status = false;
+                }
+                else{
+                    stop = requestAnimationFrame(draw); //动画继续
+                    canvas_status = true;
+                }
+            }
+        }
+
+        function keyUpHandler(e) {
+            if (e.keyCode == 39) {
+                rightPressed = false;
+            }else if (e.keyCode == 37) {
+                leftPressed = false;
+            }
+        }
+
+        $(function () {
+            drawBall();
+            drawPaddle();
+            drawBricks();
+            drawScore();
+            drawLives();
+            $('.start').click(function () {
+                stop_status = true;
+                if ($('.start').attr('flage') == 'flage') {
+                    for (var c = 0;c < brickCol;c++){
+                        for (var r = 0; r < brickRow; r++){
+                            bricks[c][r].status = 1;
+                        }
+                    }
+                    $('.start').attr("flage","");
+                    draw();
+                    // document.addEventListener("mousemove",mouseMoveHandler,false);
+                    document.addEventListener("keydown",keyDownHandler,false);
+                    document.addEventListener("keyup",keyUpHandler,false);
+                }
+
+            })
+        })
+
+    </script>
+</body>
+</html>
