@@ -96,6 +96,7 @@
                     bricks[c][r] = {x:0,y:0,status:1};
                 } 
             }
+        // 画球    
         function drawBall () {
             ctx.beginPath();
             ctx.arc(x,y,ballPadding,0,Math.PI*2) //画一个圆，底部居中
@@ -103,7 +104,7 @@
             ctx.fill();
             ctx.closePath();
         }
-
+        // 画接板
         function drawPaddle () {
             ctx.beginPath();
             ctx.rect( paddleX, paddleY,paddleWidth,paddleHeight);
@@ -111,7 +112,7 @@
             ctx.fill();
             ctx.closePath();
         }
-        
+        // 画砖块
         function drawBricks () {
             for (var c = 0;c < brickCol;c++){
                 for (var r = 0;r < brickRow; r++){
@@ -147,7 +148,7 @@
             ctx.fillStyle = "#00Fa9A";
             ctx.fillText('Game Over',170,200)
         }
-
+        // 碰撞时
         function collosion () {
             for (var c = 0;c < brickCol;c++){
                 for (var r = 0;r < brickRow; r++){
